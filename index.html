@@ -251,6 +251,22 @@
   .share-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
   .share-btn.copied { border-color: #1a9b5a; color: #1a9b5a; }
 
+  .image-share {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .image-share .btn { padding: 11px 20px; font-size: 14px; }
+  .share-sub {
+    font-size: 12px;
+    color: var(--muted);
+    text-align: center;
+    margin: 0 0 12px;
+    letter-spacing: 0.04em;
+  }
+
   .footer {
     margin-top: 40px;
     padding-top: 24px;
@@ -380,6 +396,11 @@
 
     <div class="share">
       <p class="share-title">Поделиться результатом</p>
+      <div class="image-share">
+        <button class="btn btn-primary" id="shareImageBtn" type="button" style="display:none">Поделиться картинкой</button>
+        <button class="btn" id="downloadImageBtn" type="button">Скачать картинку</button>
+      </div>
+      <p class="share-sub">или просто ссылкой на тест</p>
       <div class="share-buttons">
         <a class="share-btn" data-share="tg" target="_blank" rel="noopener">
           <svg viewBox="0 0 24 24" fill="currentColor"><path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z"/></svg>
@@ -612,6 +633,170 @@ function setupShare() {
       $("copyLabel").textContent = "Не удалось";
     }
   };
+
+  // image share / download
+  $("downloadImageBtn").onclick = async () => {
+    const canvas = buildResultCanvas();
+    canvas.toBlob(blob => triggerDownload(blob, "attachment-result.png"), "image/png");
+  };
+
+  const probe = new File([""], "p.png", { type: "image/png" });
+  if (navigator.canShare && navigator.canShare({ files: [probe] })) {
+    $("shareImageBtn").style.display = "";
+    $("shareImageBtn").onclick = async () => {
+      const canvas = buildResultCanvas();
+      canvas.toBlob(async blob => {
+        const file = new File([blob], "attachment-result.png", { type: "image/png" });
+        try {
+          await navigator.share({
+            files: [file],
+            text: `Мой тип привязанности: на ${s.anxPct.toFixed(1)}% тревожный, ${s.avoPct.toFixed(1)}% избегающий. Тест: ${url}`,
+          });
+        } catch (e) { /* пользователь отменил */ }
+      }, "image/png");
+    };
+  }
+}
+
+function triggerDownload(blob, filename) {
+  const u = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = u; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(u), 1500);
+}
+
+function buildResultCanvas() {
+  const s = score();
+  const anxHigh = s.anxRaw >= 4, avoHigh = s.avoRaw >= 4;
+  let type;
+  if (!anxHigh && !avoHigh) type = "secure";
+  else if (anxHigh && !avoHigh) type = "anxious";
+  else if (!anxHigh && avoHigh) type = "dismissive";
+  else type = "fearful";
+  const shortTitle = TYPES[type].title.split("(")[0].trim();
+
+  const W = 1200, H = 1200, dpr = 2;
+  const canvas = document.createElement("canvas");
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  const ctx = canvas.getContext("2d");
+  ctx.scale(dpr, dpr);
+  const font = '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif';
+
+  // background
+  ctx.fillStyle = "#faf9f7";
+  ctx.fillRect(0, 0, W, H);
+
+  // small caption
+  ctx.fillStyle = "#9c9a94";
+  ctx.font = `600 22px ${font}`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "alphabetic";
+  if ("letterSpacing" in ctx) ctx.letterSpacing = "3px";
+  ctx.fillText("ТЕСТ НА ТИП ПРИВЯЗАННОСТИ", W / 2, 100);
+  if ("letterSpacing" in ctx) ctx.letterSpacing = "0px";
+
+  // type name
+  ctx.fillStyle = "#1d1d1f";
+  ctx.font = `600 62px ${font}`;
+  ctx.fillText(shortTitle, W / 2, 200);
+
+  // percentages
+  ctx.fillStyle = "#6b6b70";
+  ctx.font = `400 30px ${font}`;
+  ctx.fillText(
+    `${s.anxPct.toFixed(1)}% тревожный    ·    ${s.avoPct.toFixed(1)}% избегающий`,
+    W / 2, 256
+  );
+
+  // chart frame
+  const CSZ = 760, CX = (W - CSZ) / 2, CY = 320;
+  ctx.fillStyle = "#fff";
+  ctx.strokeStyle = "#e6e4e0";
+  ctx.lineWidth = 1.5;
+  if (ctx.roundRect) {
+    ctx.beginPath();
+    ctx.roundRect(CX, CY, CSZ, CSZ, 20);
+    ctx.fill();
+    ctx.stroke();
+  } else {
+    ctx.fillRect(CX, CY, CSZ, CSZ);
+    ctx.strokeRect(CX, CY, CSZ, CSZ);
+  }
+
+  // axes
+  ctx.strokeStyle = "#e6e4e0";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(CX + CSZ / 2, CY + 30);
+  ctx.lineTo(CX + CSZ / 2, CY + CSZ - 30);
+  ctx.moveTo(CX + 30, CY + CSZ / 2);
+  ctx.lineTo(CX + CSZ - 30, CY + CSZ / 2);
+  ctx.stroke();
+
+  // ticks at 25/50/75
+  [0.25, 0.75].forEach(p => {
+    const x = CX + p * CSZ, y = CY + p * CSZ;
+    const mx = CX + CSZ / 2, my = CY + CSZ / 2;
+    ctx.beginPath();
+    ctx.moveTo(x, my - 6); ctx.lineTo(x, my + 6);
+    ctx.moveTo(mx - 6, y); ctx.lineTo(mx + 6, y);
+    ctx.stroke();
+  });
+
+  // crosshair
+  const dotX = CX + (s.anxPct / 100) * CSZ;
+  const dotY = CY + (s.avoPct / 100) * CSZ;
+  ctx.strokeStyle = "rgba(29,29,31,0.22)";
+  ctx.lineWidth = 1.2;
+  ctx.setLineDash([4, 6]);
+  ctx.beginPath();
+  ctx.moveTo(dotX, CY + 30); ctx.lineTo(dotX, dotY);
+  ctx.moveTo(CX + 30, dotY); ctx.lineTo(dotX, dotY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // dot
+  ctx.fillStyle = "#fff";
+  ctx.beginPath(); ctx.arc(dotX, dotY, 17, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#1d1d1f";
+  ctx.beginPath(); ctx.arc(dotX, dotY, 11, 0, Math.PI * 2); ctx.fill();
+
+  // edge labels (drawn last, with white pill background to mask axes)
+  ctx.font = `600 17px ${font}`;
+  if ("letterSpacing" in ctx) ctx.letterSpacing = "2px";
+  const drawLabel = (text, x, y, align) => {
+    ctx.textAlign = align;
+    ctx.textBaseline = "middle";
+    const m = ctx.measureText(text);
+    const w = m.width + (text.length - 1) * 2; // approx letter-spacing add
+    const h = 22;
+    let bx;
+    if (align === "center") bx = x - w / 2;
+    else if (align === "right") bx = x - w;
+    else bx = x;
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(bx - 8, y - h / 2, w + 16, h);
+    ctx.fillStyle = "#9c9a94";
+    ctx.fillText(text, x, y);
+  };
+  drawLabel("ВОВЛЕЧЁННЫЙ",  CX + CSZ / 2,         CY + 28,         "center");
+  drawLabel("ИЗБЕГАЮЩИЙ",   CX + CSZ / 2,         CY + CSZ - 28,   "center");
+  drawLabel("ТРЕВОЖНЫЙ",    CX + CSZ - 28,        CY + CSZ / 2,    "right");
+  drawLabel("РАССЛАБЛЕННЫЙ",CX + 28,              CY + CSZ / 2,    "left");
+  if ("letterSpacing" in ctx) ctx.letterSpacing = "0px";
+
+  // footer
+  ctx.textAlign = "center";
+  ctx.textBaseline = "alphabetic";
+  ctx.fillStyle = "#1d1d1f";
+  ctx.font = `600 24px ${font}`;
+  ctx.fillText("Terekhin Digital Crew", W / 2, H - 100);
+  ctx.fillStyle = "#5b4cff";
+  ctx.font = `400 22px ${font}`;
+  ctx.fillText("www.terekhindt.com", W / 2, H - 64);
+
+  return canvas;
 }
 </script>
 </body>
