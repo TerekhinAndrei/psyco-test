@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Тест на тип привязанности</title>
+<meta name="description" content="Узнайте свой тип привязанности по методике ECR-R за 5 минут. 36 ситуационных вопросов, наглядный результат.">
+<meta property="og:title" content="Тест на тип привязанности">
+<meta property="og:description" content="36 ситуационных вопросов по методике ECR-R. Узнайте свой тип привязанности за 5 минут.">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary">
+<style>
+  :root {
+    --bg: #faf9f7;
+    --ink: #1d1d1f;
+    --muted: #6b6b70;
+    --line: #e6e4e0;
+    --accent: #5b4cff;
+    --accent-soft: #efedff;
+    --pink: #f8c8d6;
+    --yellow: #fde9a8;
+    --blue: #c4d6ec;
+    --purple: #ccc1e8;
+    --dot: #5a2a7a;
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 32px 20px 80px;
+  }
+  h1 {
+    font-size: clamp(26px, 4vw, 34px);
+    margin: 0 0 12px;
+    letter-spacing: -0.02em;
+  }
+  .sub {
+    color: var(--muted);
+    font-size: 16px;
+    margin: 0 0 28px;
+    line-height: 1.5;
+  }
+  .card {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 28px;
+  }
+  .progress {
+    height: 6px;
+    background: var(--line);
+    border-radius: 999px;
+    overflow: hidden;
+    margin-bottom: 24px;
+  }
+  .progress-bar {
+    height: 100%;
+    background: var(--accent);
+    width: 0%;
+    transition: width 0.35s ease;
+  }
+  .q-meta {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 8px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .q-text {
+    font-size: 20px;
+    line-height: 1.4;
+    margin: 0 0 28px;
+  }
+  .scale {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .scale button {
+    appearance: none;
+    border: 1.5px solid var(--line);
+    background: #fff;
+    border-radius: 12px;
+    padding: 14px 0;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    color: var(--ink);
+    transition: all 0.15s ease;
+  }
+  .scale button:hover {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+  }
+  .scale button.selected {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: #fff;
+  }
+  .scale-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 24px;
+  }
+  .nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .btn {
+    appearance: none;
+    border: 1.5px solid var(--line);
+    background: #fff;
+    color: var(--ink);
+    padding: 10px 18px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .btn:hover:not(:disabled) {
+    border-color: var(--ink);
+  }
+  .btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+  .btn-primary:hover:not(:disabled) {
+    background: #4a3de0;
+    border-color: #4a3de0;
+  }
+
+  /* Intro */
+  #intro p { line-height: 1.6; color: var(--muted); margin: 0 0 14px; }
+  #intro ul { line-height: 1.7; color: var(--muted); padding-left: 20px; margin: 0 0 24px; }
+
+  /* Result */
+  .result-line {
+    font-size: 17px;
+    line-height: 1.7;
+    margin: 0 0 24px;
+    padding-left: 20px;
+  }
+  .result-line li::marker { color: var(--accent); }
+  .quadrant-wrap {
+    display: flex;
+    justify-content: center;
+    margin: 28px 0;
+  }
+  .quadrant {
+    position: relative;
+    width: min(420px, 100%);
+    aspect-ratio: 1 / 1;
+  }
+  .quadrant svg { width: 100%; height: 100%; display: block; }
+  .label {
+    position: absolute;
+    font-size: 10px;
+    color: var(--muted);
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    pointer-events: none;
+    white-space: nowrap;
+    background: #fff;
+    padding: 0 4px;
+  }
+  .label.top { top: 10px; left: 50%; transform: translateX(-50%); }
+  .label.bottom { bottom: 10px; left: 50%; transform: translateX(-50%); }
+  .label.left { left: 10px; top: 50%; transform: translateY(-50%); }
+  .label.right { right: 10px; top: 50%; transform: translateY(-50%); }
+  .type-card {
+    margin-top: 24px;
+    padding: 20px 0 4px;
+    border-top: 1px solid var(--line);
+  }
+  .type-card h3 {
+    margin: 0 0 8px;
+    font-size: 18px;
+    font-weight: 600;
+  }
+  .type-card p {
+    margin: 0;
+    color: var(--muted);
+    line-height: 1.6;
+    font-size: 15px;
+  }
+  .actions {
+    margin-top: 24px;
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+  }
+
+  .share {
+    margin-top: 28px;
+    padding-top: 24px;
+    border-top: 1px solid var(--line);
+  }
+  .share-title {
+    font-size: 13px;
+    color: var(--muted);
+    margin: 0 0 12px;
+    text-align: center;
+    letter-spacing: 0.04em;
+  }
+  .share-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+  }
+  .share-btn {
+    appearance: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-decoration: none;
+  }
+  .share-btn:hover {
+    border-color: var(--ink);
+    background: #faf9f7;
+  }
+  .share-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
+  .share-btn.copied { border-color: #1a9b5a; color: #1a9b5a; }
+
+  .footer {
+    margin-top: 40px;
+    padding-top: 24px;
+    border-top: 1px solid var(--line);
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  .footer .brand {
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .footer a {
+    color: var(--accent);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.15s ease;
+  }
+  .footer a:hover { border-bottom-color: var(--accent); }
+  .footer p { margin: 0 0 4px; }
+
+  @media (max-width: 600px) {
+    .wrap { padding: 22px 14px 56px; }
+    h1 { font-size: 24px; margin-bottom: 8px; }
+    .sub { font-size: 14px; margin-bottom: 20px; }
+    .card { padding: 18px; }
+    .q-meta { font-size: 11px; }
+    .q-text { font-size: 17px; margin-bottom: 22px; }
+    .scale { gap: 4px; }
+    .scale button { padding: 12px 0; font-size: 14px; border-radius: 10px; border-width: 1px; }
+    .scale-labels { font-size: 11px; }
+    .btn { padding: 10px 14px; font-size: 14px; }
+    .result-line { font-size: 15px; padding-left: 18px; }
+    .quadrant-wrap { margin: 20px 0; }
+    .label { font-size: 9px; letter-spacing: 0.12em; }
+    .label.top { top: 8px; }
+    .label.bottom { bottom: 8px; }
+    .label.left { left: 8px; }
+    .label.right { right: 8px; }
+    .type-card h3 { font-size: 16px; }
+    .type-card p { font-size: 14px; }
+    .footer { font-size: 12px; margin-top: 28px; padding-top: 18px; }
+  }
+  @media (max-width: 360px) {
+    .scale button { font-size: 13px; padding: 10px 0; }
+    .label { font-size: 8px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Тест на тип привязанности</h1>
+  <p class="sub">Методика ECR-R: 36 утверждений о близких отношениях. Отвечайте, опираясь на свой опыт романтических отношений в целом.</p>
+
+  <div id="intro" class="card">
+    <p>Перед вами утверждения о том, как вы чувствуете себя в близких отношениях. Для каждого выберите, насколько оно соответствует вам по шкале от 1 («совсем не про меня») до 7 («полностью про меня»).</p>
+    <ul>
+      <li>Отвечайте честно, не задумываясь долго.</li>
+      <li>Если у вас сейчас нет партнёра — думайте об отношениях вообще.</li>
+      <li>Прохождение займёт ~5 минут.</li>
+    </ul>
+    <div class="nav">
+      <span></span>
+      <button class="btn btn-primary" id="start">Начать</button>
+    </div>
+  </div>
+
+  <div id="quiz" class="card" style="display:none">
+    <div class="progress"><div class="progress-bar" id="bar"></div></div>
+    <div class="q-meta" id="meta"></div>
+    <p class="q-text" id="text"></p>
+    <div class="scale" id="scale"></div>
+    <div class="scale-labels">
+      <span>совсем не про меня</span>
+      <span>полностью про меня</span>
+    </div>
+    <div class="nav">
+      <button class="btn" id="prev">Назад</button>
+      <button class="btn btn-primary" id="next" disabled>Далее</button>
+    </div>
+  </div>
+
+  <div id="result" class="card" style="display:none">
+    <h2 style="margin:0 0 16px; font-size:22px;">Ваш тип привязанности:</h2>
+    <ul class="result-line">
+      <li>на <b id="anxPct">0</b>% тревожный, на <b id="avoPct">0</b>% избегающий</li>
+    </ul>
+
+    <div class="quadrant-wrap">
+      <div class="quadrant">
+        <span class="label top">вовлечённый</span>
+        <span class="label right">тревожный</span>
+        <span class="label bottom">избегающий</span>
+        <span class="label left">расслабленный</span>
+        <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+          <!-- frame -->
+          <rect x="0.5" y="0.5" width="399" height="399" rx="14" ry="14"
+                fill="#ffffff" stroke="#e6e4e0" stroke-width="1"/>
+
+          <!-- axes -->
+          <line x1="200" y1="14" x2="200" y2="386" stroke="#e6e4e0" stroke-width="1"/>
+          <line x1="14" y1="200" x2="386" y2="200" stroke="#e6e4e0" stroke-width="1"/>
+
+          <!-- ticks at 25 / 50 / 75 -->
+          <g stroke="#e6e4e0" stroke-width="1">
+            <line x1="100" y1="196" x2="100" y2="204"/>
+            <line x1="300" y1="196" x2="300" y2="204"/>
+            <line x1="196" y1="100" x2="204" y2="100"/>
+            <line x1="196" y1="300" x2="204" y2="300"/>
+          </g>
+
+          <!-- crosshair from dot -->
+          <line id="guideV" x1="200" y1="14" x2="200" y2="200" stroke="#1d1d1f" stroke-opacity="0.18" stroke-width="1" stroke-dasharray="2 3"/>
+          <line id="guideH" x1="14" y1="200" x2="200" y2="200" stroke="#1d1d1f" stroke-opacity="0.18" stroke-width="1" stroke-dasharray="2 3"/>
+
+          <!-- dot -->
+          <circle id="dot" cx="200" cy="200" r="6" fill="#1d1d1f" stroke="#fff" stroke-width="2"/>
+        </svg>
+      </div>
+    </div>
+
+    <div class="type-card">
+      <h3 id="typeTitle">—</h3>
+      <p id="typeDesc">—</p>
+    </div>
+
+    <div class="share">
+      <p class="share-title">Поделиться результатом</p>
+      <div class="share-buttons">
+        <a class="share-btn" data-share="tg" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z"/></svg>
+          Telegram
+        </a>
+        <a class="share-btn" data-share="wa" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.1-1.7-.8-2-.9-.3-.1-.5-.1-.7.1-.2.3-.7.9-.9 1.1-.2.2-.3.2-.6.1-.3-.1-1.2-.4-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6.1-.1.3-.3.4-.5.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5 0-.1-.7-1.7-.9-2.3-.3-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4 0 1.4 1 2.8 1.2 3 .1.2 2 3 4.9 4.2.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.6-.1 1.7-.7 1.9-1.3.2-.7.2-1.2.2-1.3 0-.1-.3-.2-.5-.2zM12 2C6.5 2 2 6.5 2 12c0 1.8.5 3.5 1.3 4.9L2 22l5.2-1.4c1.4.8 3 1.2 4.8 1.2 5.5 0 10-4.5 10-10S17.5 2 12 2zm0 18.2c-1.6 0-3.1-.4-4.4-1.2l-.3-.2-3.3.9.9-3.2-.2-.3C3.8 15 3.3 13.5 3.3 12c0-4.8 3.9-8.7 8.7-8.7s8.7 3.9 8.7 8.7-3.9 8.7-8.7 8.7z"/></svg>
+          WhatsApp
+        </a>
+        <a class="share-btn" data-share="vk" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.8 17.3h1.2s.4-.1.6-.3c.2-.2.2-.6.2-.6s0-1.8.9-2.1c.8-.3 1.9 1.8 3 2.6.9.6 1.5.5 1.5.5l3-.1s1.6-.1.9-1.4c-.1-.1-.5-.9-2.2-2.5-1.8-1.7-1.6-1.4.6-4.4 1.3-1.8 1.9-2.9 1.7-3.4-.2-.5-1.2-.4-1.2-.4h-3.4s-.3 0-.5.1c-.2.1-.3.4-.3.4s-.6 1.6-1.5 3c-1.7 2.9-2.4 3-2.7 2.9-.7-.4-.5-1.5-.5-2.3 0-2.4.4-3.5-.7-3.7-.4-.1-.6-.1-1.6-.1-1.2 0-2.2 0-2.7.3-.4.2-.6.6-.4.6.2 0 .8.1 1.1.6.3.6.3 1.9.3 1.9s.2 3-.5 3.4c-.5.3-1.1-.3-2.6-3-.8-1.3-1.4-2.8-1.4-2.8s-.1-.3-.3-.4c-.2-.1-.6-.2-.6-.2H1.5s-.5 0-.7.2c-.2.2 0 .6 0 .6s2.5 5.8 5.4 8.7c2.6 2.7 5.6 2.5 5.6 2.5z"/></svg>
+          VK
+        </a>
+        <a class="share-btn" data-share="tw" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+          X
+        </a>
+        <button class="share-btn" id="copyBtn" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+          <span id="copyLabel">Скопировать ссылку</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn" id="restart">Пройти заново</button>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <p>Тест разработан <a class="brand" href="https://www.terekhindt.com" target="_blank" rel="noopener">Terekhin Digital Crew</a> — разработка программного обеспечения и go-to-market стратегий для стартапов.</p>
+    <p><a href="https://www.terekhindt.com" target="_blank" rel="noopener">www.terekhindt.com</a></p>
+  </footer>
+</div>
+
+<script>
+// 36 ситуационных пунктов по двум шкалам ECR-R.
+// dim: 'anx' — тревожность, 'avo' — избегание. reverse: true — обратное кодирование.
+const QUESTIONS = [
+  { t: "Партнёр перестал отвечать в переписке посреди разговора. Через час я уже проверяю, в сети ли он.", dim: "anx" },
+  { t: "Когда партнёр обнимает меня дольше пары секунд, во мне может включиться желание мягко отстраниться.", dim: "avo" },
+  { t: "Если партнёр пишет «нам надо поговорить», я первым делом думаю, что сделал(а) что-то не так.", dim: "anx" },
+  { t: "Если у меня тяжёлый день, я скорее справлюсь сам(а), чем буду грузить партнёра.", dim: "avo" },
+  { t: "После ссоры мне трудно заниматься чем-либо, пока мы не помирились.", dim: "anx" },
+  { t: "После особенно близкого разговора или интимного вечера мне нередко хочется побыть в одиночестве.", dim: "avo" },
+  { t: "Когда партнёр уезжает на несколько дней без меня, я воображаю сценарии в духе «а вдруг он там кого-то встретит».", dim: "anx" },
+  { t: "Когда партнёр заводит разговор о том, «куда мы движемся», я внутренне напрягаюсь и хочу свернуть тему.", dim: "avo" },
+  { t: "Я перечитываю последние сообщения от партнёра, пытаясь уловить интонацию.", dim: "anx" },
+  { t: "Я редко рассказываю партнёру о своих страхах и неудачах в подробностях.", dim: "avo" },
+  { t: "Когда партнёр устал и хочет провести вечер один, я невольно воспринимаю это на свой счёт.", dim: "anx" },
+  { t: "Если меня что-то тревожит, первый человек, к которому я иду, — обычно партнёр.", dim: "avo", reverse: true },
+  { t: "Если партнёр забывает что-то важное обо мне — дату, обещание, факт — это задевает сильнее, чем должно.", dim: "anx" },
+  { t: "Когда партнёр предлагает съехаться, пожениться или завести ребёнка, моя первая внутренняя реакция — «не сейчас».", dim: "avo" },
+  { t: "Я иногда специально провоцирую разговор, чтобы проверить, как сильно партнёр меня любит.", dim: "anx" },
+  { t: "Мне легко сказать партнёру: «мне сейчас плохо, побудь со мной».", dim: "avo", reverse: true },
+  { t: "Перед встречей с друзьями или родителями партнёра я долго прокручиваю в голове, как они меня воспримут.", dim: "anx" },
+  { t: "Если партнёр плачет рядом, я не всегда знаю, что делать, и хочется сменить тему.", dim: "avo" },
+  { t: "Когда партнёр давно не пишет слов вроде «люблю» или «скучаю», у меня нарастает фоновое беспокойство.", dim: "anx" },
+  { t: "Мне комфортно провести с партнёром длинные выходные, не выпуская друг друга из вида.", dim: "avo", reverse: true },
+  { t: "Я ловлю себя на том, что слежу, кому партнёр ставит лайки и на чьи сторис отвечает.", dim: "anx" },
+  { t: "Когда партнёр спрашивает «что ты сейчас чувствуешь?», мне часто проще ответить «всё нормально», чем разбирать это вслух.", dim: "avo" },
+  { t: "Если партнёр в плохом настроении, я почти автоматически предполагаю, что причина во мне.", dim: "anx" },
+  { t: "Я охотно делюсь с партнёром деталями того, что происходит у меня на работе и внутри.", dim: "avo", reverse: true },
+  { t: "Меня иногда раздражает, что я нуждаюсь в партнёре сильнее, чем он во мне.", dim: "anx" },
+  { t: "Я ценю, что у меня есть зоны жизни, куда партнёр не заходит.", dim: "avo" },
+  { t: "На свидании, если партнёр кажется задумчивым или отстранённым, я перебираю в голове, что не так.", dim: "anx" },
+  { t: "После ссоры мне нужно физическое пространство — отдельная комната, прогулка, ночь врозь — прежде чем мириться.", dim: "avo" },
+  { t: "Когда я отправляю партнёру важное сообщение, я невольно слежу за галочками «прочитано».", dim: "anx" },
+  { t: "Когда партнёр в гостях у моих родителей или друзей, я с удовольствием показываю наше «мы».", dim: "avo", reverse: true },
+  { t: "Если планы на выходные срываются по инициативе партнёра, я расстраиваюсь сильнее, чем показываю.", dim: "anx" },
+  { t: "Если партнёр заболел и нуждается в уходе, во мне борются забота и желание отстраниться.", dim: "avo" },
+  { t: "Когда партнёр недоступен пару дней (рабочая поездка, занятость), я спокойно занимаюсь своими делами.", dim: "anx", reverse: true },
+  { t: "Когда мне грустно, мне становится легче, если партнёр просто рядом и держит меня за руку.", dim: "avo", reverse: true },
+  { t: "После хорошего вечера вдвоём я ловлю мысль: «а вдруг это в последний раз так».", dim: "anx" },
+  { t: "Долгие телефонные разговоры с партнёром скорее утомляют меня, чем согревают.", dim: "avo" },
+];
+
+const TYPES = {
+  secure: {
+    title: "Надёжный (secure)",
+    desc: "Низкая тревожность и низкое избегание. Вы комфортно чувствуете себя в близости, доверяете партнёру и не боитесь зависеть от него. Конфликты переживаете без катастрофизации."
+  },
+  anxious: {
+    title: "Тревожно-озабоченный (anxious-preoccupied)",
+    desc: "Высокая тревожность, низкое избегание. Вы хотите близости и постоянного подтверждения чувств, часто переживаете о реакциях партнёра и боитесь быть отвергнутым."
+  },
+  dismissive: {
+    title: "Избегающе-отвергающий (dismissive-avoidant)",
+    desc: "Низкая тревожность, высокое избегание. Вы цените независимость, держите дистанцию и предпочитаете полагаться на себя, а не открываться партнёру."
+  },
+  fearful: {
+    title: "Тревожно-избегающий (fearful-avoidant)",
+    desc: "Высокая тревожность и высокое избегание. Вы хотите близости, но одновременно боитесь её — отношения переживаются противоречиво: тянет и отталкивает одновременно."
+  }
+};
+
+const state = {
+  idx: 0,
+  answers: new Array(QUESTIONS.length).fill(null),
+};
+
+const $ = (id) => document.getElementById(id);
+
+function renderQuestion() {
+  const q = QUESTIONS[state.idx];
+  $("meta").textContent = `Вопрос ${state.idx + 1} из ${QUESTIONS.length}`;
+  $("text").textContent = q.t;
+  $("bar").style.width = ((state.idx) / QUESTIONS.length * 100) + "%";
+
+  const scale = $("scale");
+  scale.innerHTML = "";
+  for (let i = 1; i <= 7; i++) {
+    const b = document.createElement("button");
+    b.textContent = i;
+    if (state.answers[state.idx] === i) b.classList.add("selected");
+    b.onclick = () => {
+      state.answers[state.idx] = i;
+      renderQuestion();
+    };
+    scale.appendChild(b);
+  }
+
+  $("prev").disabled = state.idx === 0;
+  const isLast = state.idx === QUESTIONS.length - 1;
+  $("next").textContent = isLast ? "Показать результат" : "Далее";
+  $("next").disabled = state.answers[state.idx] == null;
+}
+
+function score() {
+  const anxVals = [], avoVals = [];
+  QUESTIONS.forEach((q, i) => {
+    let v = state.answers[i];
+    if (q.reverse) v = 8 - v;
+    (q.dim === "anx" ? anxVals : avoVals).push(v);
+  });
+  const mean = (arr) => arr.reduce((a, b) => a + b, 0) / arr.length;
+  const anx = mean(anxVals);
+  const avo = mean(avoVals);
+  return {
+    anxRaw: anx,
+    avoRaw: avo,
+    anxPct: (anx - 1) / 6 * 100,
+    avoPct: (avo - 1) / 6 * 100,
+  };
+}
+
+function showResult() {
+  $("quiz").style.display = "none";
+  $("result").style.display = "block";
+  const s = score();
+  $("anxPct").textContent = s.anxPct.toFixed(1);
+  $("avoPct").textContent = s.avoPct.toFixed(1);
+
+  // dot position: x = anxiety (0..400), y = avoidance from top (avo low -> top)
+  const cx = (s.anxPct / 100) * 400;
+  const cy = (s.avoPct / 100) * 400;
+  $("dot").setAttribute("cx", cx);
+  $("dot").setAttribute("cy", cy);
+  // crosshair: vertical line from top edge down to dot, horizontal from left edge to dot
+  const guideV = $("guideV");
+  guideV.setAttribute("x1", cx); guideV.setAttribute("x2", cx);
+  guideV.setAttribute("y1", 14); guideV.setAttribute("y2", cy);
+  const guideH = $("guideH");
+  guideH.setAttribute("x1", 14); guideH.setAttribute("x2", cx);
+  guideH.setAttribute("y1", cy); guideH.setAttribute("y2", cy);
+
+  let type;
+  const anxHigh = s.anxRaw >= 4;
+  const avoHigh = s.avoRaw >= 4;
+  if (!anxHigh && !avoHigh) type = "secure";
+  else if (anxHigh && !avoHigh) type = "anxious";
+  else if (!anxHigh && avoHigh) type = "dismissive";
+  else type = "fearful";
+
+  $("typeTitle").textContent = TYPES[type].title;
+  $("typeDesc").textContent = TYPES[type].desc;
+
+  setupShare();
+}
+
+$("start").onclick = () => {
+  $("intro").style.display = "none";
+  $("quiz").style.display = "block";
+  renderQuestion();
+};
+$("prev").onclick = () => { if (state.idx > 0) { state.idx--; renderQuestion(); } };
+$("next").onclick = () => {
+  if (state.answers[state.idx] == null) return;
+  if (state.idx === QUESTIONS.length - 1) {
+    $("bar").style.width = "100%";
+    showResult();
+  } else {
+    state.idx++;
+    renderQuestion();
+  }
+};
+$("restart").onclick = () => {
+  state.idx = 0;
+  state.answers = new Array(QUESTIONS.length).fill(null);
+  $("result").style.display = "none";
+  $("intro").style.display = "block";
+};
+
+function setupShare() {
+  const url = window.location.href.split("#")[0].split("?")[0];
+  const s = score();
+  const text = `Я прошёл тест на тип привязанности — на ${s.anxPct.toFixed(1)}% тревожный, ${s.avoPct.toFixed(1)}% избегающий. Пройди и ты:`;
+  const enc = encodeURIComponent;
+  const links = {
+    tg: `https://t.me/share/url?url=${enc(url)}&text=${enc(text)}`,
+    wa: `https://api.whatsapp.com/send?text=${enc(text + " " + url)}`,
+    vk: `https://vk.com/share.php?url=${enc(url)}&title=${enc(text)}`,
+    tw: `https://twitter.com/intent/tweet?text=${enc(text)}&url=${enc(url)}`,
+  };
+  document.querySelectorAll(".share-btn[data-share]").forEach(el => {
+    const k = el.getAttribute("data-share");
+    if (links[k]) el.href = links[k];
+  });
+  const copyBtn = $("copyBtn");
+  copyBtn.onclick = async () => {
+    try {
+      await navigator.clipboard.writeText(url);
+      $("copyLabel").textContent = "Скопировано";
+      copyBtn.classList.add("copied");
+      setTimeout(() => {
+        $("copyLabel").textContent = "Скопировать ссылку";
+        copyBtn.classList.remove("copied");
+      }, 2000);
+    } catch (e) {
+      $("copyLabel").textContent = "Не удалось";
+    }
+  };
+}
+</script>
+</body>
+</html>
